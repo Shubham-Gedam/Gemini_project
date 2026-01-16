@@ -1,10 +1,13 @@
 import express from 'express'
+import * as authContoller from '../controllers/auth.controller.js'
 
 
 
 const router = express.Router()
 
-router.post('/register',)
+router.post('/register',authContoller.register)
+router.post('/login', authContoller.login)
+
 
 
 
