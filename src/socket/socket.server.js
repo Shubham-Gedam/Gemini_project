@@ -52,7 +52,6 @@ export function initSocketServer(httpServer) {
         queryvector: vectors,
         limit: 5,
         metadata: {
-
         }
       })
 
@@ -66,19 +65,34 @@ export function initSocketServer(httpServer) {
         }
       })
       
-      console.log(memory);
-
       // get ordered history
       const chatHistory = await messageModel
         .find({ chat: messagePayload.chat })
         .sort({ createdAt: 1 });
 
-      const response = await aiService.generateResponse(
-        chatHistory.map((item) => ({
+        const stm = chatHistory.map((item) => ({
           role: item.role,
           parts: [{ text: item.content }],
-        })),
-      );
+        }));
+
+        const ltm = [
+                {
+                    role: "user",
+                    parts: [ {
+                        text: `
+
+                        these are some previous messages from the chat, use them to generate a response
+
+                        ${memory.map(item => item.metadata.text).join("\n")}
+                        
+                        ` } ]
+                }
+            ]
+
+            console.log(ltm[ 0 ])
+            console.log(stm)
+
+            const response = await aiService.generateResponse([ ...ltm, ...stm ])
 
       // save AI message
       const responseMessage = await messageModel.create({
