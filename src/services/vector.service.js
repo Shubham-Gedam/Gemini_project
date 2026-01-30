@@ -22,7 +22,7 @@ export async function queryMemory({ queryvector, limit = 5, metadata }) {
   const data = await geminiproIndex.query({
     vector: queryvector,
     topK: limit,
-    filter: metadata ? { metadata } : undefined,
+    filter: metadata ?  metadata  : undefined,
     includeMetadata: true,
   });
   return data.matches;
