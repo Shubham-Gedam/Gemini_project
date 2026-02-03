@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Sparkles, Send, Plus, BarChart3, Terminal, Code, Search, Wand2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 // Components
 import Sidebar from "../components/Sidebar";
-import PrivacyPolicy from "../components/PrivacyPolicy";
 import ProfileModal from "../components/Profile"; 
 import PricingModal from "../components/Pricing";
 import PersonalizationModal from "../components/Personalization";
@@ -14,7 +14,7 @@ export default function AssistantUI() {
   const [currentView, setCurrentView] = useState("main");
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
-  
+  const navigate = useNavigate();
   const scrollRef = useRef(null);
   const fileInputRef = useRef(null); // Direct reference for Plus button
 
@@ -38,7 +38,9 @@ export default function AssistantUI() {
   // LOGOUT LOGIC
   const handleLogout = () => {
     localStorage.removeItem("user");
+    localStorage.removeItem("token");
     setUser({ fullname: { firstName: "Guest" }, email: "guest@rune.ai", isGuest: true });
+    navigate("/login");
     setCurrentView("main");
     setActiveModal(null);
   };
@@ -56,11 +58,9 @@ export default function AssistantUI() {
     const file = e.target.files[0];
     if (file) {
       alert(`File selected: ${file.name}`);
-      // Yahan aap upload logic handle kar sakte hain
     }
   };
 
-  if (currentView === "privacy") return <PrivacyPolicy onBack={() => setCurrentView("main")} />;
 
   return (
     <div className="flex h-screen bg-[#080808] text-zinc-300 font-sans overflow-hidden">
@@ -105,7 +105,7 @@ export default function AssistantUI() {
           </div>
         </div>
 
-        <div className="absolute bottom-0 w-full p-6 bg-gradient-to-t from-[#080808] via-[#080808] to-transparent">
+        <div className="absolute bottom-0 w-full p-6 bg-linear-to-t from-[#080808] via-[#080808] to-transparent">
           <div className="max-w-3xl mx-auto">
             <div className="relative flex items-center bg-[#121212] border border-zinc-800 rounded-2xl p-2 shadow-2xl focus-within:border-zinc-700 transition-all">
               
