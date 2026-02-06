@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Sparkles, Send, Plus, BarChart3, Terminal, Code, Search, Wand2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { socket } from "../socket";
+
 
 // Components
 import Sidebar from "../components/Sidebar";
