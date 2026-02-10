@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Sparkles, Send, Plus, BarChart3, Terminal, Code, Search, Wand2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { socket } from "../socket";
-
 
 // Components
 import Sidebar from "../components/Sidebar";
@@ -16,9 +14,16 @@ export default function AssistantUI() {
   const [currentView, setCurrentView] = useState("main");
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
+  
+  // LocalStorage se history load karna (Persistence)
+  const [chatHistory, setChatHistory] = useState(() => {
+    const saved = localStorage.getItem("rune_chat_history");
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const navigate = useNavigate();
   const scrollRef = useRef(null);
-  const fileInputRef = useRef(null); // Direct reference for Plus button
+  const fileInputRef = useRef(null);
 
   const quickActions = [
     { label: "Analyze Data", icon: <BarChart3 size={14}/> },
@@ -29,6 +34,10 @@ export default function AssistantUI() {
   ];
 
   useEffect(() => {
+    localStorage.setItem("rune_chat_history", JSON.stringify(chatHistory));
+  }, [chatHistory]);
+
+  useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) setUser({ ...JSON.parse(storedUser), isGuest: false });
   }, []);
@@ -37,38 +46,60 @@ export default function AssistantUI() {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // LOGOUT LOGIC
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     setUser({ fullname: { firstName: "Guest" }, email: "guest@rune.ai", isGuest: true });
     navigate("/login");
-    setCurrentView("main");
-    setActiveModal(null);
   };
 
   const handleSendMessage = () => {
     if (!input.trim()) return;
     setMessages((prev) => [...prev, { role: "user", content: input }]);
     setInput("");
+    
     setTimeout(() => {
       setMessages((prev) => [...prev, { role: "assistant", content: "Rune is processing..." }]);
     }, 1000);
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      alert(`File selected: ${file.name}`);
+  const handleNewChat = () => {
+    if (messages.length > 0) {
+      const newChat = {
+        id: Date.now(),
+        title: messages[0].content.substring(0, 20) + "...", 
+        messages: messages
+      };
+      setChatHistory(prev => [newChat, ...prev]);
+      setMessages([]);
+      setCurrentView("main");
     }
   };
 
+  const loadChat = (savedMessages) => {
+    setMessages(savedMessages);
+  };
+
+  // Delete function jo Sidebar se trigger hota hai
+  const deleteChat = (chatId, e) => {
+    if(e) e.stopPropagation(); 
+    setChatHistory((prev) => prev.filter(chat => chat.id !== chatId));
+  };
 
   return (
     <div className="flex h-screen bg-[#080808] text-zinc-300 font-sans overflow-hidden">
       
-      {/* Sidebar with Logout prop */}
-      <Sidebar user={user} setView={setCurrentView} setActiveModal={setActiveModal} onLogout={handleLogout} />
+      {/* Sidebar with all necessary props */}
+      <Sidebar 
+        user={user} 
+        setView={setCurrentView} 
+        setActiveModal={setActiveModal} 
+        onLogout={handleLogout} 
+        onNewChat={handleNewChat} 
+        chatHistory={chatHistory} 
+        onLoadChat={loadChat} 
+        onDeleteChat={deleteChat} 
+      />
 
       <ProfileModal isOpen={activeModal === 'profile'} onClose={() => setActiveModal(null)} user={user} />
       <PricingModal isOpen={activeModal === 'pricing'} onClose={() => setActiveModal(null)} />
@@ -110,16 +141,9 @@ export default function AssistantUI() {
         <div className="absolute bottom-0 w-full p-6 bg-linear-to-t from-[#080808] via-[#080808] to-transparent">
           <div className="max-w-3xl mx-auto">
             <div className="relative flex items-center bg-[#121212] border border-zinc-800 rounded-2xl p-2 shadow-2xl focus-within:border-zinc-700 transition-all">
-              
-              {/* HIDDEN INPUT */}
-              <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*, .pdf" className="hidden" />
-
-              <button onClick={() => fileInputRef.current.click()} className="p-3 text-zinc-600 hover:text-zinc-400">
-                <Plus size={20} />
-              </button>
-              
+              <input type="file" ref={fileInputRef} onChange={(e) => alert(e.target.files[0]?.name)} accept="image/*, .pdf" className="hidden" />
+              <button onClick={() => fileInputRef.current.click()} className="p-3 text-zinc-600 hover:text-zinc-400"><Plus size={20} /></button>
               <input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} placeholder="Ask Rune anything..." className="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder-zinc-700 py-3 text-lg" />
-              
               <div className="flex items-center gap-3 pr-2">
                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0f1711] border border-emerald-900/30 rounded-full text-[10px] font-bold text-emerald-500 uppercase">
                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" /> Fast

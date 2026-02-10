@@ -2,13 +2,14 @@ import React, { useState, useRef, useEffect } from "react";
 import { 
   Plus, MessageSquare, User, Settings, 
   CreditCard, ShieldCheck, FileText, LogIn, LogOut,
-  PanelLeftClose, PanelLeftOpen 
+  PanelLeftClose, PanelLeftOpen, Trash2 
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-export default function Sidebar({ user, onLogout, setView, setActiveModal }) {
+
+export default function Sidebar({ user, onLogout, setView, setActiveModal, onNewChat, chatHistory = [], onLoadChat, onDeleteChat }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false); // Sidebar toggle state
+  const [isCollapsed, setIsCollapsed] = useState(false); 
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -35,17 +36,44 @@ export default function Sidebar({ user, onLogout, setView, setActiveModal }) {
       </div>
 
       {/* New Chat Button */}
-      <button className={`flex items-center gap-2 p-3 rounded-xl border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-900 hover:border-zinc-700 transition-all mb-4 text-sm font-medium ${isCollapsed ? "justify-center" : ""}`}>
+      <button 
+        onClick={onNewChat}
+        className={`flex items-center gap-2 p-3 rounded-xl border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-900 hover:border-zinc-700 transition-all mb-4 text-sm font-medium w-full ${isCollapsed ? "justify-center" : ""}`}
+      >
         <Plus size={18} /> 
         {!isCollapsed && <span>New Chat</span>}
       </button>
 
       {/* Navigation / History */}
       <nav className="flex-1 overflow-y-auto space-y-1 text-sm text-zinc-500 scrollbar-hide">
-        <div className={`flex items-center gap-2 p-2 hover:bg-zinc-900 rounded-lg cursor-pointer transition-colors group ${isCollapsed ? "justify-center" : ""}`}>
-          <MessageSquare size={16} className="group-hover:text-indigo-400 shrink-0" /> 
-          {!isCollapsed && <span className="truncate">Analysis of data...</span>}
-        </div>
+        {chatHistory.length > 0 ? (
+          chatHistory.map((chat) => (
+            <div 
+              key={chat.id} 
+              onClick={() => onLoadChat(chat.messages)}
+              className={`flex items-center justify-between p-2 hover:bg-zinc-900 rounded-lg cursor-pointer transition-colors group ${isCollapsed ? "justify-center" : ""}`}
+            >
+              <div className="flex items-center gap-2 truncate pr-2">
+                <MessageSquare size={16} className="group-hover:text-indigo-400 shrink-0" /> 
+                {!isCollapsed && <span className="truncate">{chat.title || "Untitled Chat"}</span>}
+              </div>
+              {!isCollapsed && (
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation(); 
+                    onDeleteChat(chat.id);
+                  }}
+                  className="opacity-0 group-hover:opacity-100 p-1.5 hover:text-red-500 transition-all"
+                  title="Delete Chat"
+                >
+                  <Trash2 size={14} />
+                </button>
+              )}
+            </div>
+          ))
+        ) : (
+          !isCollapsed && <div className="px-2 py-4 text-[11px] uppercase tracking-widest text-zinc-600 text-center">No History</div>
+        )}
       </nav>
 
       {/* Settings Popup Menu */}
